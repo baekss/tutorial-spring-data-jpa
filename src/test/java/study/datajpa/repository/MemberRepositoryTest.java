@@ -2,14 +2,19 @@ package study.datajpa.repository;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.transaction.annotation.Transactional;
 
+import study.datajpa.dto.MemberDto;
 import study.datajpa.entity.Member;
+import study.datajpa.entity.Team;
 
 @SpringBootTest
 @Transactional
@@ -17,6 +22,9 @@ public class MemberRepositoryTest {
 
 	@Autowired 
 	MemberRepository memberRepository;
+	
+	@Autowired
+	TeamRepository teamRepository;
 	
 	@Test
 	public void testMemberWithMemberRepository() {
@@ -61,26 +69,27 @@ public class MemberRepositoryTest {
 		assertThat(deletedCount).isEqualTo(0);
 	}
 	
-	@Test
-	public void testFindByUsernameAndAgeGreaterThan() {
-		Member m1 = new Member("감녕", 10, null);
-		Member m2 = new Member("감녕", 20, null);
+	@BeforeEach
+	private void saveTeamAndMember() {
+		Team team = new Team("오나라");
+		teamRepository.save(team);
+		
+		Member m1 = new Member("감녕", 10, team);
+		Member m2 = new Member("능통", 20, team);
 		memberRepository.save(m1);
 		memberRepository.save(m2);
-		
-		List<Member> members = memberRepository.findByUsernameAndAgeGreaterThan("감녕", 15);
+	}
+	
+	@Test
+	public void testFindByUsernameAndAgeGreaterThan() {
+		List<Member> members = memberRepository.findByUsernameAndAgeGreaterThan("능통", 15);
 		assertThat(members.size()).isEqualTo(1);
-		assertThat(members.get(0).getUsername()).isEqualTo("감녕");
+		assertThat(members.get(0).getUsername()).isEqualTo("능통");
 		assertThat(members.get(0).getAge()).isEqualTo(20);
 	}
 	
 	@Test
 	public void testFindMemberBy() {
-		Member m1 = new Member("감녕", 10, null);
-		Member m2 = new Member("감녕", 20, null);
-		memberRepository.save(m1);
-		memberRepository.save(m2);
-		
 		List<Member> members = memberRepository.findMemberBy();
 		assertThat(members.size()).isEqualTo(2);
 	}
@@ -97,5 +106,49 @@ public class MemberRepositoryTest {
 		List<Member> members = memberRepository.findByUsername("능통");
 		assertThat(members.get(0)).isEqualTo(m2); //true
 		assertThat(members.get(1)).isEqualTo(m3); //true
+	}
+	
+	@Test
+	public void testQuery() {
+		List<Member> members = memberRepository.findUser("능통", 20);
+		members.stream().forEach(m->System.out.println(m.getTeam().getName()));
+	}
+	
+	@Test
+	public void testQueryResultForDto() {
+		List<String> usernames = memberRepository.findUsernames();
+		usernames.stream().forEach(System.out::println);
+		
+		List<MemberDto> dtos = memberRepository.findMemberDto();
+		dtos.stream().forEach(System.out::println);
+	}
+	
+	@Test
+	public void testFindByNames() {
+		List<Member> members = memberRepository.findByNames(Arrays.asList("감녕","능통"));
+		members.stream().forEach(System.out::println);
+	}
+	
+	@Test
+	public void testReturnType() {
+		//조건에 해당하는 것이 없으면 emptyList가 반환된다.
+		List<Member> members = memberRepository.findListByUsername("능통");
+		members.stream().forEach(System.out::println);
+		
+		//조건에 해당하는 것이 없으면 null이 반환된다(jpa와 data-jpa의 차이점).
+		Member member = memberRepository.findMemberByUsername("능통");
+		System.out.println(member);
+		
+		//조건에 해당하는 것이 없으면 Optional.empty가 반환된다.
+		Optional<Member> optional = memberRepository.findOptionalByUsername("능통");
+		System.out.println(optional.get());
+		
+		//Single Result를 받아야 하는데 다 건 조회가 된다면 IncorrectResultSizeDataAccessException(Caused by: javax.persistence.NonUniqueResultException)
+		
+		Member m3 = new Member("능통", 20, null);
+		memberRepository.save(m3);
+		
+		Optional<Member> o = memberRepository.findOptionalByUsername("능통");
+		System.out.println(o.get());
 	}
 }

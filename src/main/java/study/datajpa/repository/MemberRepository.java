@@ -1,11 +1,14 @@
 package study.datajpa.repository;
 
+import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import study.datajpa.dto.MemberDto;
 import study.datajpa.entity.Member;
 
 public interface MemberRepository extends JpaRepository<Member, Long>{
@@ -18,4 +21,20 @@ public interface MemberRepository extends JpaRepository<Member, Long>{
 	
 	@Query(name="Member.findByUsername")
 	public abstract List<Member> findByUsername(@Param("username") String username);
+	
+	@Query("select m from Member m where m.username = :username and m.age = :age")
+	public abstract List<Member> findUser(@Param("username") String username, @Param("age") int age);
+	
+	@Query("select m.username from Member m")
+	public abstract List<String> findUsernames();
+	
+	@Query("select new study.datajpa.dto.MemberDto(m.id, m.username, t.name) from Member m join m.team t")
+	public abstract List<MemberDto> findMemberDto();
+	
+	@Query("select m from Member m where m.username in :names")
+	public abstract List<Member> findByNames(@Param("names") Collection<String> names);
+	
+	List<Member> findListByUsername(String username); //컬렉션
+	Member findMemberByUsername(String username); //단건
+	Optional<Member> findOptionalByUsername(String username); //단건 Optional
 }
