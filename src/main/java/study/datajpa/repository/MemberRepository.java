@@ -4,6 +4,9 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -37,4 +40,13 @@ public interface MemberRepository extends JpaRepository<Member, Long>{
 	List<Member> findListByUsername(String username); //컬렉션
 	Member findMemberByUsername(String username); //단건
 	Optional<Member> findOptionalByUsername(String username); //단건 Optional
+	
+	Page<Member> findByAge(int age, Pageable pageable);
+	
+	Slice<Member> findMemberByAge(int age, Pageable pageable);
+	
+	//카운트 쿼리가 조회 쿼리를 기반으로 실행되기 때문에, 조회 쿼리가 성능이 안 좋은 쿼리라면
+	//동일한 결과를 얻을 수 있는 카운트 쿼리를 따로 작성하자 
+	@Query(value="select m from Member m left join m.team t", countQuery="select count(m) from Member m")
+	Page<Member> findAll(int age, Pageable pageable);
 }

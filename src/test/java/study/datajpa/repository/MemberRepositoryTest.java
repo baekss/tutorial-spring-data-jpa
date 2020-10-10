@@ -10,6 +10,10 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Slice;
+import org.springframework.data.domain.Sort;
 import org.springframework.transaction.annotation.Transactional;
 
 import study.datajpa.dto.MemberDto;
@@ -150,5 +154,70 @@ public class MemberRepositoryTest {
 		
 		Optional<Member> o = memberRepository.findOptionalByUsername("능통");
 		System.out.println(o.get());
+	}
+	
+	@Test
+	public void testPaging() {
+		Member m3 = new Member("주태", 10, null);
+		Member m4 = new Member("육손", 10, null);
+		memberRepository.save(m3);
+		memberRepository.save(m4);
+		
+		int age = 10;
+		
+		/*
+		 * PageRequest.of(해당 페이지, 한 페이지에 넣을 아이템 개수, 정렬 조건)
+		 * 1. 조회 된 아이템들을 정렬 조건에 의해 정렬 후
+		 * 2. 두번째 인자값으로 설정된 값만큼 앞에서부터 그룹화
+		 * 3. 앞에 그룹 부터 0...N 페이지로 구분
+		 * 한 페이지에 두개씩이면, 두번째 페이지 일때 offset : 1*2, limit : 2, 세번째 페이지 일때 offset : 2*2, limit : 2
+		 */
+		PageRequest pageRequest = PageRequest.of(0, 2, Sort.by(Sort.Direction.DESC, "username"));
+		
+		//마지막 페이지 조회 조건으로 호출했을 때는 카운트 쿼리가 실행되지 않는다(ex. (이전 페이지 수 * 아이템 수) + 현재 페이지 아이템 수로 계산 가능). 
+		Page<Member> page = memberRepository.findByAge(age, pageRequest);
+		
+		List<Member> content = page.getContent();
+		long totalElements = page.getTotalElements();
+		
+		for(Member member : content) {
+			System.out.println(member);
+		}
+		System.out.println("totalElements "+totalElements);
+		
+		assertThat(content.size()).isEqualTo(2); //0페이지에는 "주태, 육손"
+		assertThat(totalElements).isEqualTo(3); //나이(age)가 10살은 총 3명
+		assertThat(page.getNumber()).isEqualTo(0); //현재 0페이지 보기 상태임
+		assertThat(page.getTotalPages()).isEqualTo(2); //4명을 2명씩 그룹화해서 2페이지까지임
+		assertThat(page.isFirst()).isTrue(); //첫번째 페이지를 보고 있음
+		assertThat(page.isLast()).isFalse(); //마지막 페이지를 보고 있지 않음
+		assertThat(page.hasNext()).isTrue(); //다음 페이지 있음
+		
+		//Slice는 다음 페이지가 존재하는지 확인할 수 있도록 쿼리를 실행함(ex. limit : limit + 1) 
+		Slice<Member> slice = memberRepository.findMemberByAge(age, pageRequest);
+		List<Member> sliceContent = slice.getContent();
+		assertThat(sliceContent.size()).isEqualTo(2);
+		assertThat(slice.getNumber()).isEqualTo(0);
+		assertThat(slice.isFirst()).isTrue();
+		assertThat(slice.isLast()).isFalse();
+		assertThat(slice.hasNext()).isTrue();
+	}
+	
+	@Test
+	public void testPage2() {
+		Member m3 = new Member("주태", 10, null);
+		Member m4 = new Member("육손", 10, null);
+		memberRepository.save(m3);
+		memberRepository.save(m4);
+		
+		PageRequest pageRequest = PageRequest.of(1, 2, Sort.by(Sort.Direction.DESC, "username"));
+		
+		Page<Member> page = memberRepository.findAll(10, pageRequest);
+		
+		//Entity를 Dto로 변환한 Page를 사용
+		Page<MemberDto> pageDto = page.map(m->new MemberDto(m.getId(), m.getUsername(), null));
+		
+		assertThat(pageDto.getContent().size()).isEqualTo(2);
+		assertThat(pageDto.getTotalElements()).isEqualTo(4);
 	}
 }
