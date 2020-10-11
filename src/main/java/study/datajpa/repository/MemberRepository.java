@@ -8,6 +8,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -49,4 +50,8 @@ public interface MemberRepository extends JpaRepository<Member, Long>{
 	//동일한 결과를 얻을 수 있는 카운트 쿼리를 따로 작성하자 
 	@Query(value="select m from Member m left join m.team t", countQuery="select count(m) from Member m")
 	Page<Member> findAll(int age, Pageable pageable);
+	
+	@Modifying(clearAutomatically = true)
+	@Query("update Member m set m.age = m.age + 2 where m.age >= :age")
+	int bulkAgePlus(@Param("age") int age);
 }

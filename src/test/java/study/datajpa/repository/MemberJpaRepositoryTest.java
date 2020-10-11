@@ -7,6 +7,7 @@ import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.annotation.Rollback;
 import org.springframework.transaction.annotation.Transactional;
 
 import study.datajpa.entity.Member;
@@ -108,5 +109,22 @@ public class MemberJpaRepositoryTest {
 		
 		assertThat(members.size()).isEqualTo(2);
 		assertThat(totalCount).isEqualTo(3);
+	}
+	
+	@Test
+	@Rollback(false)
+	public void testBulkAgePlus() {
+		Member m1 = new Member("감녕", 10, null);
+		Member m2 = new Member("능통", 20, null);
+		Member m3 = new Member("주태", 25, null);
+		Member m4 = new Member("육손", 30, null);
+		memberJpaRepository.save(m1);
+		memberJpaRepository.save(m2);
+		memberJpaRepository.save(m3);
+		memberJpaRepository.save(m4);
+		
+		int resultRows = memberJpaRepository.bulkAgePlus(20);
+		
+		assertThat(resultRows).isEqualTo(3);
 	}
 }

@@ -6,6 +6,9 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,6 +17,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.domain.Sort;
+import org.springframework.test.annotation.Rollback;
 import org.springframework.transaction.annotation.Transactional;
 
 import study.datajpa.dto.MemberDto;
@@ -29,6 +33,9 @@ public class MemberRepositoryTest {
 	
 	@Autowired
 	TeamRepository teamRepository;
+	
+	@PersistenceContext
+	private EntityManager em;
 	
 	@Test
 	public void testMemberWithMemberRepository() {
@@ -219,5 +226,24 @@ public class MemberRepositoryTest {
 		
 		assertThat(pageDto.getContent().size()).isEqualTo(2);
 		assertThat(pageDto.getTotalElements()).isEqualTo(4);
+	}
+	
+	@Test
+	@Rollback(false)
+	public void testBulkAgePlus() {
+		Member m3 = new Member("주태", 25, null);
+		Member m4 = new Member("육손", 30, null);
+		memberRepository.save(m3);
+		memberRepository.save(m4);
+		
+		int resultRows = memberRepository.bulkAgePlus(20);
+		//영속성 컨텍스트를 비워, 1차 캐시에서 데이터를 조회하지 않도록 함
+		//@Modifying(clearAutomatically = true) 사용 또는 em.clear(); 
+		
+		List<Member> members = memberRepository.findByUsername("육손");
+		Member member = members.get(0);
+		System.out.println(member);
+		
+		assertThat(resultRows).isEqualTo(3);
 	}
 }
