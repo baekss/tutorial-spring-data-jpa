@@ -7,6 +7,7 @@ import java.util.Optional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -54,4 +55,19 @@ public interface MemberRepository extends JpaRepository<Member, Long>{
 	@Modifying(clearAutomatically = true)
 	@Query("update Member m set m.age = m.age + 2 where m.age >= :age")
 	int bulkAgePlus(@Param("age") int age);
+	
+	@Query("select m from Member m left join fetch m.team t")
+	List<Member> findMemberFetchJoin();
+	
+	@Override //JpaRepository의 메소드를 오버라이딩하여 연관관계 객체를 fetch join 한 형태로 사용
+	@EntityGraph(attributePaths= {"team"})
+	List<Member> findAll();
+	
+	@EntityGraph(attributePaths= {"team"}) //연관관계 객체를 fetch join 한 형태로 사용
+	@Query("select m from Member m")
+	List<Member> findMemberEntityGraph();
+	
+	//@EntityGraph(attributePaths= {"team"}) //연관관계 객체를 fetch join 한 형태로 사용
+	@EntityGraph("Member.all")
+	List<Member> findMemberEntityGraphByUsername(@Param("username") String username);
 }

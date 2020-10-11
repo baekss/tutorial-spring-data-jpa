@@ -246,4 +246,49 @@ public class MemberRepositoryTest {
 		
 		assertThat(resultRows).isEqualTo(3);
 	}
+	
+	@Test
+	public void findMemberLazy() {
+		//given
+		//member1 -> teamA
+		//member2 -> teamB
+		
+		Team teamB = new Team("위나라");
+		teamRepository.save(teamB);
+		Member m3 = new Member("하후돈", 25, teamB);
+		Member m4 = new Member("하후연", 30, teamB);
+		memberRepository.save(m3);
+		memberRepository.save(m4);
+		
+		em.flush();
+		em.clear();
+		
+		List<Member> members = memberRepository.findAll();
+		
+		//findAll 오버라이딩 이전에는 프록시 객체를 주입받는다.(N+1쿼리)
+		members.stream().forEach(m -> {
+									System.out.println(m.getClass()); //study.datajpa.entity.Member
+									System.out.println(m);
+									System.out.println(m.getTeam().getClass()); //study.datajpa.entity.Team$HibernateProxy$EMxcw1ew
+									System.out.println(m.getTeam().getName());
+								});
+	}
+	
+	@Test
+	public void findMemberFetchJoin() {
+		Team teamB = new Team("위나라");
+		teamRepository.save(teamB);
+		Member m3 = new Member("하후돈", 25, teamB);
+		Member m4 = new Member("하후연", 30, teamB);
+		memberRepository.save(m3);
+		memberRepository.save(m4);
+		
+		List<Member> members = memberRepository.findMemberFetchJoin();
+		members.stream().forEach(m -> {
+									System.out.println(m.getClass()); //study.datajpa.entity.Member
+									System.out.println(m);
+									System.out.println(m.getTeam().getClass()); //study.datajpa.entity.Team
+									System.out.println(m.getTeam().getName());
+								});
+	}
 }
