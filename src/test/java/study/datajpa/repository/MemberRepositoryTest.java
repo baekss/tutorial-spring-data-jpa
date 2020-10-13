@@ -291,4 +291,24 @@ public class MemberRepositoryTest {
 									System.out.println(m.getTeam().getName());
 								});
 	}
+	
+	@Test
+	public void testQueryHint() {
+		Member m3 = new Member("하후돈", 25, null);
+		memberRepository.save(m3);
+		em.flush();
+		em.clear();
+		
+		Member findMember = memberRepository.findReadOnlyByUsername(m3.getUsername());
+		//@QueryHints를 readOnly로 설정했기 때문에 변경감지에 의한 update 쿼리 실행 안됨. 
+		findMember.setUsername("하후은");
+		
+		em.flush();
+	}
+	
+	@Test
+	public void testLock() {
+		//Lock설정에 의해 select .. for update 쿼리가 실행
+		List<Member> members = memberRepository.findLockByUsername("감녕");
+	}
 }
