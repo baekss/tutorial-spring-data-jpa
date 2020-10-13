@@ -311,4 +311,13 @@ public class MemberRepositoryTest {
 		//Lock설정에 의해 select .. for update 쿼리가 실행
 		List<Member> members = memberRepository.findLockByUsername("감녕");
 	}
+	
+	@Test
+	public void testCallCustom() {
+		/*
+		 * MemberRepository가 extends 한 MemberRepositoryCustom 인터페이스의
+		 * 구현체 MemberRepositoryImpl의 findMemberCustom 메소드를 호출함.
+		 */
+		memberRepository.findMemberCustom();
+	}
 }

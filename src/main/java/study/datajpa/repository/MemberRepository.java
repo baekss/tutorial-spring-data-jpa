@@ -21,7 +21,7 @@ import org.springframework.data.repository.query.Param;
 import study.datajpa.dto.MemberDto;
 import study.datajpa.entity.Member;
 
-public interface MemberRepository extends JpaRepository<Member, Long>{
+public interface MemberRepository extends JpaRepository<Member, Long>, MemberRepositoryCustom{
 	
 	/** namedQuery를 먼저 찾고 없으면 메소드명에 의한 쿼리 자동 생성 사용 */
 	
