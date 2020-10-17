@@ -6,9 +6,13 @@ import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.annotation.Rollback;
 import org.springframework.transaction.annotation.Transactional;
+
+import study.datajpa.repository.MemberRepository;
+import study.datajpa.repository.TeamRepository;
 
 @SpringBootTest
 @Transactional
@@ -17,6 +21,12 @@ public class MemberTest {
 
 	@PersistenceContext
 	EntityManager em;
+	
+	@Autowired
+	MemberRepository memberRepository;
+	
+	@Autowired
+	TeamRepository teamRepository;
 	
 	@Test
 	public void testEntity() {
@@ -44,5 +54,36 @@ public class MemberTest {
 							.getResultList();
 		
 		members.stream().forEach(m->{System.out.println(m.toString()+" "+m.getTeam().toString());});
+	}
+	
+	@Test
+	public void JpaEventBaseEntity() throws Exception {
+		//given
+		Team team = new Team("오나라");
+		teamRepository.save(team);
+		
+		Member member = new Member("감녕");
+		member.changeTeam(team);
+		memberRepository.save(member);
+		
+		Thread.sleep(1000);
+		team.setName("위나라");
+		member.setUsername("황개");
+		
+		em.flush();
+		em.clear();
+		
+		//when
+		Member findMember = memberRepository.findById(member.getId()).get();
+		
+		//then
+		System.out.println("findMember " + findMember.getUsername()); //황개
+		System.out.println("findMemberCreatedDate " + findMember.getCreatedDate()); //2020-10-17T14:49:34.982335
+		System.out.println("findMemberUpdatedDate " + findMember.getLastModifiedDate()); //2020-10-17T14:49:35.992393
+		System.out.println("findMemberCreatedBy " + findMember.getCreatedBy()); //720d11af-dc1c-45da-a7df-35f29724321f
+		System.out.println("findMemberLastModifiedBy " + findMember.getLastModifiedBy()); //a13c018b-7905-4ecc-9f13-724a198d4724
+		System.out.println("findTeamName " + findMember.getTeam().getName()); //위나라
+		System.out.println("findTeamCreatedDate " + findMember.getTeam().getCreatedDate()); //2020-10-17T14:49:34.925332
+		System.out.println("findTeamLastModifiedDate " + findMember.getTeam().getLastModifiedDate()); //2020-10-17T14:49:35.988392
 	}
 }
