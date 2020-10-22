@@ -13,6 +13,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.domain.Example;
+import org.springframework.data.domain.ExampleMatcher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Slice;
@@ -331,5 +333,41 @@ public class MemberRepositoryTest {
 		List<Member> result = memberRepository.findAll(spec);
 		
 		assertThat(result.size()).isEqualTo(1);
+	}
+	
+	@Test
+	public void queryExample() {
+		em.flush();
+		em.clear();
+		/**
+			select
+		        member0_.member_id as member_i1_1_,
+		        member0_.created_date as created_2_1_,
+		        member0_.last_modified_date as last_mod3_1_,
+		        member0_.created_by as created_4_1_,
+		        member0_.last_modified_by as last_mod5_1_,
+		        member0_.age as age6_1_,
+		        member0_.team_id as team_id8_1_,
+		        member0_.username as username7_1_ 
+		    from
+		        member member0_ 
+		    inner join
+		        team team1_ 
+		            on member0_.team_id=team1_.team_id 
+		    where
+		        team1_.name=? 
+		        and member0_.username=?
+		*/
+		Member member = new Member("감녕");
+		member.changeTeam(new Team("오나라"));
+		
+		//outer join 에는 사용불가
+		//기본정책으로 null은 무시, 다만 primitive 타입은 초기화값 사용(primitive 타입 무시 필요시 ExampleMatcher 이용)
+		ExampleMatcher matcher = ExampleMatcher.matching().withIgnorePaths("age");
+		
+		Example<Member> example = Example.of(member, matcher);
+		List<Member> result = memberRepository.findAll(example);
+		
+		assertThat(result.get(0).getUsername()).isEqualTo("감녕");
 	}
 }
