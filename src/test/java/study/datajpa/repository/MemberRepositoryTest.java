@@ -17,6 +17,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.test.annotation.Rollback;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -319,5 +320,16 @@ public class MemberRepositoryTest {
 		 * 구현체 MemberRepositoryImpl의 findMemberCustom 메소드를 호출함.
 		 */
 		memberRepository.findMemberCustom();
+	}
+	
+	@Test
+	public void specBasic() {
+		em.flush();
+		em.clear();
+		
+		Specification<Member> spec = MemberSpec.username("감녕").and(MemberSpec.teamName("오나라"));
+		List<Member> result = memberRepository.findAll(spec);
+		
+		assertThat(result.size()).isEqualTo(1);
 	}
 }
