@@ -408,4 +408,15 @@ public class MemberRepositoryTest {
 		List<NestedClosedProjection> nestedResult = memberRepository.<NestedClosedProjection>findProjectionsByUsername("능통", NestedClosedProjection.class);
 		nestedResult.stream().forEach(nr->System.out.println(nr.getUsername()+" "+nr.getTeam().getName()));
 	}
+	
+	@Test
+	public void nativeQuery() {
+		Member result = memberRepository.findByNativeQuery("능통");
+		System.out.println("result: "+ result);
+		
+		PageRequest pageRequest = PageRequest.of(0, 10, Sort.by(Sort.Direction.DESC, "username"));
+		Page<MemberProjection> page = memberRepository.findByNativeProjection(pageRequest);
+		List<MemberProjection> memberPros = page.getContent();
+		memberPros.forEach(m -> System.out.println(m.getId() + " " + m.getUsername() + " " + m.getTeamName()));
+	}
 }
