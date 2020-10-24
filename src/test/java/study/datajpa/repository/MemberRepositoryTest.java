@@ -370,4 +370,42 @@ public class MemberRepositoryTest {
 		
 		assertThat(result.get(0).getUsername()).isEqualTo("감녕");
 	}
+	
+	@Test 
+	public void testProjections() {
+		//UsernameDto를 jdk dynamic proxy를 통해 구현체를 생성
+		List<UsernameDto> usernames = memberRepository.findProjectionsByUsername("능통");
+		usernames.stream().forEach(u->System.out.println(u.getUsername()));
+		
+		//구현체로 조회
+		List<UsernameImplDto> users = memberRepository.findProjectionsBy();
+		users.stream().forEach(u->System.out.println(u.getMemberName()+" "+u.getMemberAge()));
+		
+		//제네릭타입으로 동적인 조회1
+		List<UsernameImplDto> result1 = memberRepository.<UsernameImplDto>findProjectionsByUsername("능통", UsernameImplDto.class);
+		result1.stream().forEach(r->System.out.println(r.getMemberName()));
+		
+		//제네릭타입으로 동적인 조회2
+		List<UsernameDto> result2 = memberRepository.<UsernameDto>findProjectionsByUsername("능통", UsernameDto.class);
+		result2.stream().forEach(r->System.out.println(r.getUsername()));
+		
+		/**
+		select
+	        member0_.username as col_0_0_,
+	        team1_.team_id as col_1_0_,
+	        team1_.team_id as team_id1_2_,
+	        team1_.created_date as created_2_2_,
+	        team1_.last_modified_date as last_mod3_2_,
+	        team1_.name as name4_2_ 
+	    from
+	        member member0_ 
+	    left outer join
+	        team team1_ 
+	            on member0_.team_id=team1_.team_id 
+	    where
+	        member0_.username=?
+		 */
+		List<NestedClosedProjection> nestedResult = memberRepository.<NestedClosedProjection>findProjectionsByUsername("능통", NestedClosedProjection.class);
+		nestedResult.stream().forEach(nr->System.out.println(nr.getUsername()+" "+nr.getTeam().getName()));
+	}
 }
