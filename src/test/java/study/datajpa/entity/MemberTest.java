@@ -8,7 +8,7 @@ import javax.persistence.PersistenceContext;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.annotation.Rollback;
+import org.springframework.test.annotation.Commit;
 import org.springframework.transaction.annotation.Transactional;
 
 import study.datajpa.repository.MemberRepository;
@@ -16,7 +16,8 @@ import study.datajpa.repository.TeamRepository;
 
 @SpringBootTest
 @Transactional
-@Rollback(false)
+//@Rollback(false)
+@Commit
 public class MemberTest {
 
 	@PersistenceContext
@@ -85,5 +86,21 @@ public class MemberTest {
 		System.out.println("findTeamName " + findMember.getTeam().getName()); //위나라
 		System.out.println("findTeamCreatedDate " + findMember.getTeam().getCreatedDate()); //2020-10-17T14:49:34.925332
 		System.out.println("findTeamLastModifiedDate " + findMember.getTeam().getLastModifiedDate()); //2020-10-17T14:49:35.988392
+	}
+	
+	@Test
+	public void addMember() {
+		Team team = new Team("오나라");
+		teamRepository.save(team);
+		
+		Member member = new Member("손책");
+		member.changeTeam(team);
+		memberRepository.save(member);
+		em.flush();
+		em.clear();
+		Member member2 = new Member("손견",20, teamRepository.findById(101L).get()); //영속화된 Team을 셋팅함
+		memberRepository.save(member2);
+		em.flush();
+		em.clear();
 	}
 }
